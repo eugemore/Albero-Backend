@@ -7,7 +7,7 @@ import app from './app.js'
 dotenv.config();
 
 const MongoClient = mongodb.MongoClient
-const port = process.env.PORT || 8000;
+const port = process.env.AUTH_PORT || 8000;
 
 MongoClient.connect(process.env.ALBERO_DB_URI,
   {

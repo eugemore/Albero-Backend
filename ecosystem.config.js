@@ -1,16 +1,24 @@
 module.exports = {
   apps: [
     {
-      name   : "authApi",
-      script : "./Auth/server.js",
+      name: "authApi",
+      script: "./Auth/server.js",
       watch: ['./Auth'],
-      exec_mode: 'cluster'
+      env: {
+        NODE_ENV:'.env'
+      },
+      // env: '.env',
+      // exec_mode: 'cluster'
     },
     {
-      name   : "familyApi",
-      script : "./Families/server.js",
+      name: "familyApi",
+      script: "./Families/server.js",
       watch: ['./Families'],
-      exec_mode: 'cluster'
+      env: {
+        NODE_ENV:'.env'
+      },
+      // env: '.env',
+      // exec_mode: 'cluster'
     },
     // {
     //   script: './service-worker/',
@@ -18,16 +26,16 @@ module.exports = {
     // }
   ],
 
-  deploy: {
-    production: {
-      user: 'SSH_USERNAME',
-      host: 'SSH_HOSTMACHINE',
-      ref: 'origin/master',
-      repo: 'GIT_REPOSITORY',
-      path: 'DESTINATION_PATH',
-      'pre-deploy-local': '',
-      'post-deploy': 'npm install && pm2 reload ecosystem.config.js --env production',
-      'pre-setup': ''
-    }
-  }
+  // deploy: {
+  //   production: {
+  //     user: 'SSH_USERNAME',
+  //     host: 'SSH_HOSTMACHINE',
+  //     ref: 'origin/master',
+  //     repo: 'GIT_REPOSITORY',
+  //     path: 'DESTINATION_PATH',
+  //     'pre-deploy-local': '',
+  //     'post-deploy': 'npm install && pm2 reload ecosystem.config.js --env production',
+  //     'pre-setup': ''
+  //   }
+  // }
 };
