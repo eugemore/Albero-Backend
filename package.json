@@ -3,9 +3,8 @@
   "type": "commonjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start2": "(cd Auth && pm2 start server.js --name authApi) & (cd .. && cd families && pm2 start server.js --name familyApi)",
     "start": "pm2 start ecosystem.config.js",
-    "devinstall": "(npm install && cd Auth) & (npm install && cd ..) & (cd families && npm install && cd ..)"
+    "devinstall": "(npm install && cd Auth) & (npm install && cd ..) & (cd families && npm install && cd ..) & (cd documents && npm install && cd ..)"
   },
   "dependencies": {
     "nodemon": "^2.0.20",

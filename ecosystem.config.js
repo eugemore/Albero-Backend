@@ -7,7 +7,6 @@ module.exports = {
       env: {
         NODE_ENV:'.env'
       },
-      // env: '.env',
       // exec_mode: 'cluster'
     },
     {
@@ -17,7 +16,15 @@ module.exports = {
       env: {
         NODE_ENV:'.env'
       },
-      // env: '.env',
+      // exec_mode: 'cluster'
+    },
+    {
+      name: "documentsApi",
+      script: "./Documents/server.js",
+      watch: ['./Documents'],
+      env: {
+        NODE_ENV:'.env'
+      },
       // exec_mode: 'cluster'
     },
     // {
