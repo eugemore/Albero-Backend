@@ -1,14 +1,15 @@
-import FamilyDAO from "../DAOs/family.dao.js"
+import { Request, Response, NextFunction } from 'express';
+import FamilyDAO from '../DAOs/family.dao'
 
 export default class FamilyController {
-  static async getAllFamilies(req, res) {
+  static async getAllFamilies(req: Request, res: Response) {
 
     const family = await FamilyDAO.getAllFamilies();
 
     res.status(200).json(family);
   }
 
-  static async getFamilyById(req, res) {
+  static async getFamilyById(req: Request, res: Response):Promise<void> {
     const { id } = req.params;
     const family = await FamilyDAO.getFamilyById(id);
     if (family) {
@@ -18,7 +19,7 @@ export default class FamilyController {
     }
   }
 
-  static async getMembersById(req, res) {
+  static async getMembersById(req: Request, res: Response) {
     const { id } = req.params;
     const family = await FamilyDAO.getMembersById(id);
     if (family) {
@@ -28,7 +29,7 @@ export default class FamilyController {
     }
   }
 
-  static async updateFamilyMember(req, res) {
+  static async updateFamilyMember(req: Request, res: Response) {
     const member = req.body;
     const familyId = req.params.id;
     let updatedFamily;

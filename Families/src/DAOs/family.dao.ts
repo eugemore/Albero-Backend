@@ -1,16 +1,16 @@
-import { ObjectId } from "mongodb";
+import { ObjectId, Collection, MongoClient } from "mongodb";
 
-let families;
+let families: Collection;
 
 export default class FamilyDAO {
-	static async injectDB(conn) {
+	static async injectDB(conn: MongoClient) {
 		if (families) {
 			return
 		}
 		try {
 			families = await conn.db(process.env.ALBERO_NS).collection("subjects");
 		} catch (err) {
-			console.error(`unable to establish a collection handle in FamilyDAO: ${e}`)
+			console.error(`unable to establish a collection handle in FamilyDAO: ${err}`)
 		}
 	}
 
@@ -21,7 +21,7 @@ export default class FamilyDAO {
 			cursor = await families.find();
 		} catch (err) {
 			console.error(`Unable to issue find command , ${err}`);
-			return { restaurantList: [], totalNumRestaurants: 0 };
+			return null;
 		}
 
 		try {
@@ -33,10 +33,10 @@ export default class FamilyDAO {
 		}
 	}
 
-	static async getFamilyById(id) {
+	static async getFamilyById(id: string) {
 		let family;
 		try {
-			family = await families.findOne({ "_id": ObjectId(id) }, { "password": 0 });
+			family = await families.findOne({ "_id": new ObjectId(id) }, { projection: { "password": 0 } });
 			return family;
 
 		} catch (err) {
@@ -45,10 +45,10 @@ export default class FamilyDAO {
 		}
 	}
 
-	static async getMembersById(id) {
+	static async getMembersById(id: string) {
 		let members;
 		try {
-			members = await families.findOne({ "_id": ObjectId(id) },{ "members": 1 });
+			members = await families.findOne({ "_id": new ObjectId(id) }, { projection: { "members": 1 } });
 			return members.members;
 
 		} catch (err) {
@@ -57,7 +57,7 @@ export default class FamilyDAO {
 		}
 	}
 
-	static async createFamily(user) {
+	static async createFamily(user: any) {
 		const family = {
 			email: user.email,
 			password: user.password,
@@ -67,18 +67,18 @@ export default class FamilyDAO {
 			passport: "",
 			ueArrival: "",
 			residenciaDate: "",
-			members: []
+			members: new Array<any>()
 		}
-		try{
+		try {
 			return await families.insertOne(family);
-		}catch(err){
+		} catch (err) {
 			console.log(`Unable to create document at Family collection: ${err}`)
 			return {}
 		}
 	}
 
-	static async updateFamilyMember(familyId, member) {
-		let update = {};
+	static async updateFamilyMember(familyId: string, member: any) {
+		const update: any = {};
 
 		if (member.birth_date) {
 			update["members.$.birth_date"] = member.birth_date;
@@ -89,7 +89,7 @@ export default class FamilyDAO {
 		if (member.firstName) {
 			update["members.$.firstName"] = member.firstName;
 		}
-		if (member.middleNames != undefined || member.middleNames != null) {
+		if (member.middleNames !== undefined || member.middleNames !== null) {
 			update["members.$.middleNames"] = member.middleNames;
 		}
 		if (member.lastName) {
@@ -101,15 +101,15 @@ export default class FamilyDAO {
 		if (member.status) {
 			update["members.$.status"] = member.status;
 		}
-		if (member["alive"] != null) {
+		if (member.alive != null) {
 			update["members.$.alive"] = member.alive;
 		}
 
 		let updatedFamily;
 		try {
 			updatedFamily = await families.updateOne({
-				"_id": ObjectId(familyId),
-				"members._id": ObjectId(member._id)
+				"_id": new ObjectId(familyId),
+				"members._id": new ObjectId(member._id)
 			},
 				{
 					$set: update
@@ -122,11 +122,11 @@ export default class FamilyDAO {
 		}
 	}
 
-	static async addFamilyMember(familyId, member) {
+	static async addFamilyMember(familyId: string, member: any) {
 		member._id = new ObjectId();
 		try {
 			const addedMember = await families.updateOne({
-				"_id": ObjectId(familyId),
+				"_id": new ObjectId(familyId),
 			},
 				{
 					$push: {
@@ -142,15 +142,15 @@ export default class FamilyDAO {
 	}
 
 
-	//HAY QUE TERMINAR
-	static async deleteFamilyMember(familyId, memberId) {
+	// HAY QUE TERMINAR
+	static async deleteFamilyMember(familyId: string, memberId: string) {
 		try {
 			const addedMember = await families.updateOne({
-				"_id": ObjectId(familyId),
+				"_id": new ObjectId(familyId),
 			},
 				{
 					$pull: {
-						members: { "$._id": ObjectId(memberId) }
+						members: { "$._id": new ObjectId(memberId) }
 					}
 				});
 			return addedMember;

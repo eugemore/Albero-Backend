@@ -1,6 +1,6 @@
-import OptionsController from '../controllers/options.controller.js';
+import OptionsController from '../controllers/options.controller';
 import express from 'express';
-import AuthMiddleware from '../middlewares/auth.middleware.js';
+import AuthMiddleware from '../middlewares/auth.middleware';
 
 const optionsRouter = express.Router();
 

@@ -1,18 +1,19 @@
-import jsonWebToken from 'jsonwebtoken';
+import { verify, Secret } from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 
 dotenv.config()
 
-const secret = process.env.ACCESS_TOKEN_SECRET;
+const secret: Secret = (process.env.ACCESS_TOKEN_SECRET) as Secret;
 
 export default class AuthMiddleware {
-  static async validateToken(req, res, next) {
-    const auth = req.headers['authorization']
+  static async validateToken(req: Request, res: Response, next: NextFunction) {
+    const auth = req.headers.authorization
     if(auth){
       const token = auth.split(' ')[1]
       if (token) {
         try {
-          const jwt = jsonWebToken.verify(token,secret);
+          const jwt = verify(token,secret);
           return next()
         } catch (err) {
           return res.status(401).send('Unauthorized')

@@ -1,14 +1,16 @@
-let options;
+import { Collection, MongoClient } from "mongodb";
+
+let options: Collection;
 
 export default class OptionsDAO {
-  static async injectDB(conn) {
+  static async injectDB(conn: MongoClient) {
     if (options) {
       return
     }
     try {
       options = await conn.db(process.env.ALBERO_NS).collection("formOptions");
     } catch (err) {
-      console.error(`unable to establish a collection handle in optionsDAO: ${e}`)
+      console.error(`unable to establish a collection handle in optionsDAO: ${err}`)
     }
   }
 
