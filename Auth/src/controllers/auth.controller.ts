@@ -1,21 +1,22 @@
-import jsonwebtoken from 'jsonwebtoken';
-import AuthDAO from '../DAOs/auth.dao.js';
+import { sign } from 'jsonwebtoken';
+import AuthDAO from '../DAOs/auth.dao';
 import dotenv from 'dotenv';
-import bcrypt from 'bcrypt';
+import { compare } from 'bcrypt';
+import { Request, Response } from 'express';
 
 dotenv.config()
 
 export default class AuthController {
 
-  static async loginUser(req, res) {
-    const email = req.body.email;
-    const password = req.body.password;
-    const user = await AuthDAO.getUserByEmail(email);
-    if(user) {
-      if (await bcrypt.compare(password, user.password)) {
-        const bearerToken = jsonwebtoken.sign(
+  static async loginUser(req: Request, res: Response) {
+    const email: string = req.body.email;
+    const password: string = req.body.password;
+    const user: any = await AuthDAO.getUserByEmail(email);
+    if (user?.password) {
+      if (await compare(password, user.password)) {
+        const bearerToken: string = sign(
           {},
-          process.env.ACCESS_TOKEN_SECRET,
+          process.env.ACCESS_TOKEN_SECRET as string,
           {
             expiresIn: 1200,
             subject: user._id.toString()
@@ -24,21 +25,19 @@ export default class AuthController {
           idToken: bearerToken,
           expiresAt: (new Date().getTime() + 1199 * 1000)
         })
-      } 
+      }
     }
     console.log(`${email} wrong password!`)
     res.status(401).send(`wrong username or password`);
   }
 
-  static async createNewUser(req, res) {
+  static async createNewUser(req: Request, res: Response) {
     const user = {
-      email: req.body.email,
-      password: req.body.password.toString()
+      email: req.body.email as string,
+      password: req.body.password.toString() as string
     }
 
-    const userExists = await AuthDAO.checkUniqueEmail(user.email);
-    
-    if (userExists) {
+    if (await AuthDAO.checkUniqueEmail(user.email)) {
       return res.status(400).send('User already exists');
     } else {
       const newUser = await AuthDAO.createUser(user);

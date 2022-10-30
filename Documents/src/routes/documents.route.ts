@@ -1,7 +1,7 @@
 import express from 'express';
-import DocumentsController from '../controllers/documents.controller.js';
-import AuthMiddleware from '../middlewares/auth.middleware.js';
-import validationMiddleware from '../middlewares/validation.middleware.js';
+import DocumentsController from '../controllers/documents.controller';
+import AuthMiddleware from '../middlewares/auth.middleware';
+import validationMiddleware from '../middlewares/validation.middleware';
 
 const documentsRouter = express.Router();
 

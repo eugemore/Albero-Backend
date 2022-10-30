@@ -1,24 +1,24 @@
-import { ObjectId } from "mongodb";
-import bcrypt from 'bcrypt';
-let auth;
+import { ObjectId, MongoClient, Collection, InsertOneResult } from "mongodb";
+import { genSalt, hash } from 'bcrypt';
+let auth: Collection;
 
 export default class AuthDAO {
-  static async injectDB(conn) {
+  static async injectDB(conn: MongoClient) {
     if (auth) {
       return
     }
     try {
       auth = await conn.db(process.env.ALBERO_NS).collection("subjects");
     } catch (err) {
-      console.error(`unable to establish a collection handle in AuthDAO: ${e}`)
+      console.error(`unable to establish a collection handle in AuthDAO: ${err}`)
     }
   }
 
-  static async getUserByEmail(email) {
+  static async getUserByEmail(email: string) {
     try {
       const user = await auth.findOne(
         { "email": email },
-        { "email": 1, "password": 1 })
+        { projection: { "email": 1, "password": 1 } })
 
       return user
     } catch (err) {
@@ -27,8 +27,8 @@ export default class AuthDAO {
     }
   }
 
-  static async checkUniqueEmail(email) {
-    let count
+  static async checkUniqueEmail(email: string): Promise<boolean> {
+    let count: number
 
     try {
       count = await auth.countDocuments({ "email": email });
@@ -39,10 +39,10 @@ export default class AuthDAO {
     }
   }
 
-  static async createUser(user) {
-    const salt = await bcrypt.genSalt();
+  static async createUser(user: { email: string, password: string }): Promise<InsertOneResult | null> {
+    const salt = await genSalt();
     let createdUser;
-    const hashedPassword = await bcrypt.hash(user.password, salt);
+    const hashedPassword = await hash(user.password, salt);
     const family = {
       email: user.email,
       password: hashedPassword,
@@ -52,14 +52,14 @@ export default class AuthDAO {
       passport: "",
       ueArrival: "",
       residenciaDate: "",
-      members: []
+      members: new Array<any>()
     }
     try {
       createdUser = await auth.insertOne(family);
       return createdUser
     } catch (err) {
       console.log(`Unable to create document at Family collection: ${err}`)
-      return {}
+      return null
     }
   }
 }

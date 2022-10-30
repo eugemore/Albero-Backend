@@ -1,13 +1,13 @@
-import mongodb from 'mongodb';
+import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
-import AuthDAO from './DAOs/auth.dao.js'
-import app from './app.js'
+import DocumentsDAO from './DAOs/documents.dao'
+import app from './app'
+import FileManager from './services/file-manager.service';
 
 
 dotenv.config();
 
-const MongoClient = mongodb.MongoClient
-const port = process.env.AUTH_PORT || 8000;
+const port = process.env.DOCUMENTS_PORT || 8000;
 
 MongoClient.connect(process.env.ALBERO_DB_URI,
   {
@@ -18,8 +18,8 @@ MongoClient.connect(process.env.ALBERO_DB_URI,
     console.error(err.stack);
     process.exit(1);
   }).then(async client => {
-    await AuthDAO.injectDB(client);
-    // await ReviewsDAO.injectDB(client);
+    await DocumentsDAO.injectDB(client);
+    await FileManager.connectBucket();
     app.listen(port, () => {
       console.log(`listening to port ${port}`);
     })

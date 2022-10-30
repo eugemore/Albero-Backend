@@ -1,6 +1,5 @@
 import { constants } from 'fs';
 import { access, appendFile, mkdir, readFile } from 'fs/promises'
-import path from 'path';
 
 export default class FileManager {
 
@@ -14,7 +13,7 @@ export default class FileManager {
     }
   }
 
-  static async saveFile(member, document, file) {
+  static async saveFile(member: string, document:{ type: string, subtype: string, documentURI?: string}, file: any): Promise<string | null> {
     try {
       const path = `./bucketMock/${document.type}_${document.subtype}_${member}.pdf`;
       await appendFile(path,file.data);
@@ -26,9 +25,9 @@ export default class FileManager {
     }
   }
 
-  static async getFile(path) {
+  static async getFile(fileURI: string): Promise<Buffer | null> {
     try {
-      const file = await readFile(path)
+      const file: Buffer = await readFile(fileURI)
       return file;
     }
     catch (err) {
