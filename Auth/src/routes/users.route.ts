@@ -6,7 +6,8 @@ const usersRouter = express.Router();
 
 /* GET users listing. */
 usersRouter.post('/login',AuthMiddleware.checkPayload, AuthController.loginUser);
-usersRouter.post('/signup', AuthController.createNewUser);
+usersRouter.post('/signup', AuthController.createVerificationEmail);
+usersRouter.get('/verify', AuthController.verifyEmail);
 
 
 export default usersRouter;
