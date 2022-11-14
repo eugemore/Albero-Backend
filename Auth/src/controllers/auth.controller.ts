@@ -9,7 +9,7 @@ dotenv.config()
 
 export default class AuthController {
 
-  static async loginUser(req: Request, res: Response) {
+  static async loginUser(req: Request, res: Response): Promise<Response> {
     const email: string = req.body.email;
     const password: string = req.body.password;
     const user: any = await AuthDAO.getUserByEmail(email);

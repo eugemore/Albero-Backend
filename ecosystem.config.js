@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "authApi",
-      script: "./Auth/server.js",
+      script: "./Auth/src/server.ts",
       watch: ['./Auth'],
       env: {
         NODE_ENV:'.env'
@@ -11,7 +11,7 @@ module.exports = {
     },
     {
       name: "familyApi",
-      script: "./Families/server.js",
+      script: "./Families/src/server.ts",
       watch: ['./Families'],
       env: {
         NODE_ENV:'.env'
@@ -20,7 +20,7 @@ module.exports = {
     },
     {
       name: "documentsApi",
-      script: "./Documents/server.js",
+      script: "./Documents/src/server.ts",
       watch: ['./Documents'],
       env: {
         NODE_ENV:'.env'
