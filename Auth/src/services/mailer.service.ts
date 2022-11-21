@@ -1,10 +1,10 @@
-import { genSalt, hash } from "bcrypt";
 import { createTransport } from "nodemailer";
+import dotenv from 'dotenv';
 
+dotenv.config()
 
 export default class MailerService {
   static async sendEmail(code: string, email: string) {
-    const salt = await genSalt();
       const emailLink = `${process.env.AUTH_URL}/verify?user=${code}&email=${email}`;
       const transporter = createTransport({
         service: 'gmail',

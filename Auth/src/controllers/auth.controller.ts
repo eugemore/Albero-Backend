@@ -13,39 +13,35 @@ export default class AuthController {
     const email: string = req.body.email;
     const password: string = req.body.password;
     const user: any = await AuthDAO.getUserByEmail(email);
-    console.log(user)
-    if (user.active) {
-      if (user.password) {
-        if (await compare(password, user.password)) {
-          const bearerToken: string = sign(
-            {},
-            process.env.ACCESS_TOKEN_SECRET as string,
-            {
-              expiresIn: 1200,
-              subject: user._id.toString()
-            });
-          return res.status(200).json({
-            idToken: bearerToken,
-            expiresAt: (new Date().getTime() + 1199 * 1000)
-          })
-        }
-      }
-      return res.status(401).send(`wrong username or password`);
+    if (user?.active === false) return res.status(401).send(`Email not verified!`);
+    if (user?.password && await compare(password, user.password)) {
+
+      const bearerToken: string = sign(
+        {},
+        process.env.ACCESS_TOKEN_SECRET as string,
+        {
+          expiresIn: 1200,
+          subject: user._id.toString()
+        });
+
+      return res.status(200).json({
+        idToken: bearerToken,
+        expiresAt: (new Date().getTime() + 1199 * 1000)
+      })
     }
-    return res.status(401).send(`Email not verified!`);
+
+    return res.status(401).send(`wrong username or password`);
   }
 
   static async createVerificationEmail(req: Request, res: Response): Promise<any> {
     const email: string = req.body.email;
     const password: string = req.body.password;
     const user: any = await AuthDAO.checkUniqueEmail(email);
-    if (user) {
-      // if (user && (user.active === true)) {
-      return res.status(400).send('User already exists');
-    }
+    if (user) return res.status(400).send('User already exists');
+
     const { result, code } = await AuthDAO.createAuthUser(email, password);
     if (result) {
-      MailerService.sendEmail(code, email)
+      await MailerService.sendEmail(code, email)
       return res.status(201).send('Email sent!');
     } else {
       return res.status(500).send('Bu!!');
@@ -55,7 +51,6 @@ export default class AuthController {
   static async verifyEmail(req: Request, res: Response) {
     const code: string = req.query.user as string;
     const user = await AuthDAO.getUserByVerificationCode(code);
-    console.log(user)
     if (user) {
       const family = await AuthDAO.createFamily(user._id);
       if (family) {

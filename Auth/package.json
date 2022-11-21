@@ -7,7 +7,7 @@
     "build": "tsc",
     "prestart": "npm run build",
     "start": "nodemon src/server.ts",
-    "test": "jest",
+    "test": "jest --coverage=true",
     "coverage": "nyc -r text -e .ts -x \"tests/*.test.ts\" npm run test"
   },
   "dependencies": {
@@ -25,6 +25,8 @@
     "typescript": "^4.8.4"
   },
   "devDependencies": {
+    "@jest-mock/express": "^2.0.1",
+    "@shelf/jest-mongodb": "^4.1.3",
     "@types/bcrypt": "^5.0.0",
     "@types/cookie-parser": "^1.4.3",
     "@types/cors": "^2.8.12",

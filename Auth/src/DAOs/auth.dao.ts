@@ -1,18 +1,21 @@
 import { ObjectId, MongoClient, Collection, InsertOneResult } from "mongodb";
 import { genSalt, hash } from 'bcrypt';
+import dotenv from 'dotenv';
+
+dotenv.config()
 
 let families: Collection;
 let auth: Collection;
 let client: MongoClient
 
 export default class AuthDAO {
-  static async injectDB(conn: MongoClient) {
+  static injectDB(conn: MongoClient): void {
     try {
       if (!families) {
-        families = await conn.db(process.env.ALBERO_NS).collection("subjects");
+        families = conn.db(process.env.ALBERO_NS).collection("subjects");
       }
       if (!auth) {
-        auth = await conn.db(process.env.ALBERO_NS).collection("Authorization");
+        auth = conn.db(process.env.ALBERO_NS).collection("Authorization");
       }
       if (!client) {
         client = conn;
@@ -65,7 +68,7 @@ export default class AuthDAO {
     const hashedPassword = await hash(password, salt);
     const hashedEmail = await hash(password, salt2)
     const user = {
-      email: email,
+      email,
       password: hashedPassword,
       active: false,
       createdAt: new Date(),
@@ -73,7 +76,7 @@ export default class AuthDAO {
     }
     try {
       const result: InsertOneResult<Document> = await auth.insertOne(user);
-      return { result: result, code: user.verificationCode };
+      return { result, code: user.verificationCode };
     } catch (err) {
       console.error(`Unable to issue find command "createVerificationEmail" , ${err}`);
       return null;
@@ -81,6 +84,7 @@ export default class AuthDAO {
   }
 
   static async createFamily(userId: ObjectId) {
+    let familyResult: InsertOneResult<any>;
     const family = {
       _id: userId,
       createdAt: new Date(),
@@ -91,14 +95,14 @@ export default class AuthDAO {
       residenciaDate: "",
       members: new Array<any>()
     }
-    const session = client.startSession()
+    const session = client.startSession();
 
     try {
       const result = await session.withTransaction(async () => {
-        await families.insertOne(family, { session });
+        familyResult = await families.insertOne(family, { session });
         await auth.updateOne({ _id: userId }, { $set: { active: true } }, { session });
       })
-      return result;
+      return familyResult;
     } catch (err) {
       console.error(`Cannot complete transaction: ${err}`)
       return null

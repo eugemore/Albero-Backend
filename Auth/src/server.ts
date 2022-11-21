@@ -18,7 +18,7 @@ MongoClient.connect(process.env.ALBERO_DB_URI,
     console.error(err.stack);
     process.exit(1);
   }).then(async client => {
-    await AuthDAO.injectDB(client);
+    AuthDAO.injectDB(client);
     app.listen(port, () => {
       console.log(`listening to port ${port}`);
     })
