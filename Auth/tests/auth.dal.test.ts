@@ -1,9 +1,7 @@
-import { describe, expect, test, jest, afterEach, beforeAll, afterAll } from '@jest/globals';
-import { ObjectId, MongoClient, Db, Collection } from "mongodb";
-import { genSalt, hash } from 'bcrypt';
-import AuthDAO from '../src/DAOs/auth.dao';
+import { describe, expect, test, jest, beforeAll } from '@jest/globals';
+import { MongoClient, Db,  } from "mongodb";
+import AuthDAO from '../src/authorization/auth.dal';
 import dotenv from 'dotenv';
-import { MockInstance } from 'jest-mock';
 
 
 dotenv.config();

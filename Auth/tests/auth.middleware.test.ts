@@ -1,6 +1,6 @@
 import { describe, expect, test, jest, afterEach } from '@jest/globals';
 import { getMockReq, getMockRes } from '@jest-mock/express';
-import AuthMiddleware from '../src/middlewares/auth.middleware'
+import AuthMiddleware from '../src/utils/middlewares/auth.middleware'
 
 
 describe('AuthMiddleware', () => {

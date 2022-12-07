@@ -1,7 +1,7 @@
 import { describe, expect, test, jest, afterEach } from '@jest/globals';
 import nodeMailer from "nodemailer";
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
-import MailerService from '../src/services/mailer.service';
+import MailerService from '../src/utils/services/mailer.service';
 
 // jest.mock('nodemailer');
 describe('Mailer Service', () => {

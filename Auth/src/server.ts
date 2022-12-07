@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
-import AuthDAO from './DAOs/auth.dao'
+import AuthDAL from './authorization/auth.dal'
 import app from './app'
 
 
@@ -18,7 +18,7 @@ MongoClient.connect(process.env.ALBERO_DB_URI,
     console.error(err.stack);
     process.exit(1);
   }).then(async client => {
-    AuthDAO.injectDB(client);
+    AuthDAL.injectDB(client);
     app.listen(port, () => {
       console.log(`listening to port ${port}`);
     })

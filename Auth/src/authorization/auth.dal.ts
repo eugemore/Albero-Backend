@@ -8,7 +8,7 @@ let families: Collection;
 let auth: Collection;
 let client: MongoClient
 
-export default class AuthDAO {
+export default class AuthDAL {
   static injectDB(conn: MongoClient): void {
     try {
       if (!families) {
@@ -83,31 +83,7 @@ export default class AuthDAO {
     }
   }
 
-  static async createFamily(userId: ObjectId) {
-    let familyResult: InsertOneResult<any>;
-    const family = {
-      _id: userId,
-      createdAt: new Date(),
-      phone: "",
-      codiceFiscale: "",
-      passport: "",
-      ueArrival: "",
-      residenciaDate: "",
-      members: new Array<any>()
-    }
-    const session = client.startSession();
+  static async validateEmail() {
 
-    try {
-      const result = await session.withTransaction(async () => {
-        familyResult = await families.insertOne(family, { session });
-        await auth.updateOne({ _id: userId }, { $set: { active: true } }, { session });
-      })
-      return familyResult;
-    } catch (err) {
-      console.error(`Cannot complete transaction: ${err}`)
-      return null
-    } finally {
-      await session.endSession();
-    }
   }
 }

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import OptionsDAO from '../DAOs/options.dao'
+import OptionsDAO from './options.dao'
 
 export default class OptionsController {
   static async getCardFormOptions(req: Request, res: Response) {

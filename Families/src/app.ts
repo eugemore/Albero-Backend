@@ -3,8 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
-import familyRouter from './routes/family.route';
-import optionsRouter from './routes/options.route';
+import familyRouter from './family/family.route';
+import optionsRouter from './options/options.route';
 
 const app = express();
 

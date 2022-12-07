@@ -3,8 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
-import AuthMiddleware from './middlewares/auth.middleware';
-import AuthController from './controllers/auth.controller';
+import AuthMiddleware from './utils/middlewares/auth.middleware';
+import AuthController from './authorization/auth.controller';
 
 const app = express();
 

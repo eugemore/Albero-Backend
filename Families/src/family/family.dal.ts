@@ -1,8 +1,9 @@
-import { ObjectId, Collection, MongoClient } from "mongodb";
+import { ObjectId, Collection, MongoClient, InsertOneResult, WithId } from "mongodb";
+import { Family } from "../utils/models/family.model";
 
-let families: Collection;
+let families: Collection<Family>;
 
-export default class FamilyDAO {
+export default class FamilyDAL {
 	static async injectDB(conn: MongoClient) {
 		if (families) {
 			return
@@ -41,7 +42,7 @@ export default class FamilyDAO {
 
 		} catch (err) {
 			console.error(`Unable to issue find by Id command , ${err}`);
-			return {};
+			throw err;
 		}
 	}
 
@@ -57,23 +58,23 @@ export default class FamilyDAO {
 		}
 	}
 
-	static async createFamily(user: any) {
-		const family = {
-			email: user.email,
-			password: user.password,
+	static async createFamily(userId: ObjectId) {
+		const family: WithId<Family> = {
+			_id: userId,
 			createdAt: new Date(),
-			phone: "",
-			codiceFiscale: "",
-			passport: "",
-			ueArrival: "",
-			residenciaDate: "",
+			owner: {
+			},
 			members: new Array<any>()
 		}
+
 		try {
-			return await families.insertOne(family);
-		} catch (err) {
-			console.log(`Unable to create document at Family collection: ${err}`)
-			return {}
+			const familyResult = await families.insertOne(family);
+			return familyResult;
+		}
+
+		catch (err) {
+			console.error(`Cannot complete transaction: ${err}`)
+			return null
 		}
 	}
 
@@ -150,7 +151,7 @@ export default class FamilyDAO {
 			},
 				{
 					$pull: {
-						members: { "$._id": new ObjectId(memberId) }
+						'members': { "_id": new ObjectId(memberId) }
 					}
 				});
 			return addedMember;

@@ -1,17 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
-import FamilyDAO from '../DAOs/family.dao'
+import FamilyDAL from './family.dal'
 
 export default class FamilyController {
-  static async getAllFamilies(req: Request, res: Response) {
+  // static async getAllFamilies(req: Request, res: Response) {
 
-    const family = await FamilyDAO.getAllFamilies();
+  //   const family = await FamilyDAO.getAllFamilies();
 
-    res.status(200).json(family);
-  }
+  //   res.status(200).json(family);
+  // }
 
-  static async getFamilyById(req: Request, res: Response):Promise<void> {
+  static async getFamilyById(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
-    const family = await FamilyDAO.getFamilyById(id);
+    let family;
+    family = await FamilyDAL.getFamilyById(id);
     if (family) {
       res.status(200).json(family);
     } else {
@@ -19,9 +20,13 @@ export default class FamilyController {
     }
   }
 
+  static async createFamily(req: Request, res: Response): Promise<void> {
+    //TODO: create Family
+  }
+
   static async getMembersById(req: Request, res: Response) {
     const { id } = req.params;
-    const family = await FamilyDAO.getMembersById(id);
+    const family = await FamilyDAL.getMembersById(id);
     if (family) {
       res.status(200).json(family);
     } else {
@@ -34,10 +39,10 @@ export default class FamilyController {
     const familyId = req.params.id;
     let updatedFamily;
     if (member._id) {
-      updatedFamily = await FamilyDAO.updateFamilyMember(familyId, member);
+      updatedFamily = await FamilyDAL.updateFamilyMember(familyId, member);
     }
     else {
-      updatedFamily = await FamilyDAO.addFamilyMember(familyId, member);
+      updatedFamily = await FamilyDAL.addFamilyMember(familyId, member);
     }
     if (updatedFamily) {
       res.json(updatedFamily);

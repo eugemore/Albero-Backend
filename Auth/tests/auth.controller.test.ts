@@ -2,13 +2,13 @@ import { describe, expect, test, jest, afterEach } from '@jest/globals';
 import { compare } from 'bcrypt';
 import { InsertOneResult, ObjectId } from 'mongodb';
 import { getMockReq, getMockRes } from '@jest-mock/express'
-import AuthController from '../src/controllers/auth.controller';
-import AuthDAO from '../src/DAOs/auth.dao';
-import MailerService from '../src/services/mailer.service';
+import AuthController from '../src/authorization/auth.controller';
+import AuthDAL from '../src/authorization/auth.dal';
+import MailerService from '../src/utils/services/mailer.service';
 
 
-jest.mock('../src/DAOs/auth.dao')
-jest.mock('../src/services/mailer.service')
+jest.mock('../src/authorization/auth.dal')
+jest.mock('../src/utils/services/mailer.service')
 jest.mock('bcrypt')
 
 describe('AuthController:', () => {
@@ -17,7 +17,7 @@ describe('AuthController:', () => {
     const { res, clearMockRes } = getMockRes();
 
     afterEach(() => {
-      (AuthDAO.getUserByEmail as jest.Mock).mockReset();
+      (AuthDAL.getUserByEmail as jest.Mock).mockReset();
       (compare as jest.Mock).mockReset();
       clearMockRes();
     })
@@ -31,14 +31,14 @@ describe('AuthController:', () => {
       };
 
       //Mock Implementations
-      (AuthDAO.getUserByEmail as jest.Mock).mockResolvedValue(user as never);
+      (AuthDAL.getUserByEmail as jest.Mock).mockResolvedValue(user as never);
       (compare as jest.Mock).mockResolvedValue(true as never);
 
       //Act
       await AuthController.loginUser(req, res);
 
       //Assert
-      expect(AuthDAO.getUserByEmail).toBeCalled();
+      expect(AuthDAL.getUserByEmail).toBeCalled();
       expect(res.status).toHaveBeenCalledWith(200);
     });
 
@@ -51,7 +51,7 @@ describe('AuthController:', () => {
       };
 
       //Mock Implementations
-      (AuthDAO.getUserByEmail as jest.Mock).mockResolvedValue(user as never);
+      (AuthDAL.getUserByEmail as jest.Mock).mockResolvedValue(user as never);
       (compare as jest.Mock).mockResolvedValue(false as never);
 
       //Act
@@ -71,7 +71,7 @@ describe('AuthController:', () => {
       };
 
       //Mock Implementations
-      (AuthDAO.getUserByEmail as jest.Mock).mockResolvedValue(user as never);
+      (AuthDAL.getUserByEmail as jest.Mock).mockResolvedValue(user as never);
       (compare as jest.Mock).mockResolvedValue(true as never);
 
       //Act
@@ -87,7 +87,7 @@ describe('AuthController:', () => {
       const user: any = null;
 
       //Mock Implementations
-      (AuthDAO.getUserByEmail as jest.Mock).mockResolvedValue(user as never);
+      (AuthDAL.getUserByEmail as jest.Mock).mockResolvedValue(user as never);
       (compare as jest.Mock).mockResolvedValue(true as never);
 
       //Act
@@ -107,8 +107,8 @@ describe('AuthController:', () => {
 
 
     afterEach(() => {
-      (AuthDAO.checkUniqueEmail as jest.Mock).mockReset();
-      (AuthDAO.createAuthUser as jest.Mock).mockReset();
+      (AuthDAL.checkUniqueEmail as jest.Mock).mockReset();
+      (AuthDAL.createAuthUser as jest.Mock).mockReset();
       (MailerService.sendEmail as jest.Mock).mockReset();
       clearMockRes();
     })
@@ -122,8 +122,8 @@ describe('AuthController:', () => {
       };
 
       //Mock implementations
-      (AuthDAO.checkUniqueEmail as jest.Mock).mockResolvedValue(user as never);
-      (AuthDAO.createAuthUser as jest.Mock).mockResolvedValue({ result, code } as never);
+      (AuthDAL.checkUniqueEmail as jest.Mock).mockResolvedValue(user as never);
+      (AuthDAL.createAuthUser as jest.Mock).mockResolvedValue({ result, code } as never);
 
       //Act
       const callResult = await AuthController.createVerificationEmail(req, res);
@@ -145,8 +145,8 @@ describe('AuthController:', () => {
       };
 
       //Mock implementations
-      (AuthDAO.checkUniqueEmail as jest.Mock).mockResolvedValue(user as never);
-      (AuthDAO.createAuthUser as jest.Mock).mockResolvedValue({ result, code } as never);
+      (AuthDAL.checkUniqueEmail as jest.Mock).mockResolvedValue(user as never);
+      (AuthDAL.createAuthUser as jest.Mock).mockResolvedValue({ result, code } as never);
 
       //Act
       const callResult = await AuthController.createVerificationEmail(req, res);
@@ -163,8 +163,8 @@ describe('AuthController:', () => {
       const result: any = null;
 
       //Mock implementations
-      (AuthDAO.checkUniqueEmail as jest.Mock).mockResolvedValue(user as never);
-      (AuthDAO.createAuthUser as jest.Mock).mockResolvedValue({ result, code } as never);
+      (AuthDAL.checkUniqueEmail as jest.Mock).mockResolvedValue(user as never);
+      (AuthDAL.createAuthUser as jest.Mock).mockResolvedValue({ result, code } as never);
 
       //Act
       const callResult = await AuthController.createVerificationEmail(req, res);
@@ -178,11 +178,9 @@ describe('AuthController:', () => {
   describe('Calling verifyEmail method with:', () => {
     const req = getMockReq({ body: { email: 'test@test.com', password: 'testPassword' } });
     const { res, clearMockRes } = getMockRes();
-    const createFamilySpy = jest.spyOn(AuthDAO,'createFamily');
 
     afterEach(() => {
-      (AuthDAO.getUserByVerificationCode as jest.Mock).mockReset();
-      (AuthDAO.createFamily as jest.Mock).mockReset();
+      (AuthDAL.getUserByVerificationCode as jest.Mock).mockReset();
       clearMockRes();
     });
 
@@ -199,15 +197,13 @@ describe('AuthController:', () => {
       };
 
       //Mock implementations
-      (AuthDAO.getUserByVerificationCode as jest.Mock).mockResolvedValue(user as never);
-      (AuthDAO.createFamily as jest.Mock).mockResolvedValue(familyResult as never);
+      (AuthDAL.getUserByVerificationCode as jest.Mock).mockResolvedValue(user as never);
 
       //Act
       await AuthController.verifyEmail(req, res);
 
       //Assert
       expect(res.status).toBeCalledWith(201);
-      expect(createFamilySpy).toBeCalledWith(user._id);
       expect(res.redirect).toBeCalled();
     });
 
@@ -221,8 +217,7 @@ describe('AuthController:', () => {
       };
 
       //Mock implementations
-      (AuthDAO.getUserByVerificationCode as jest.Mock).mockResolvedValue(user as never);
-      (AuthDAO.createFamily as jest.Mock).mockResolvedValue(familyResult as never);
+      (AuthDAL.getUserByVerificationCode as jest.Mock).mockResolvedValue(user as never);
 
       //Act
       await AuthController.verifyEmail(req, res);
@@ -230,30 +225,6 @@ describe('AuthController:', () => {
       //Assert
       expect(res.status).toBeCalledWith(400);
       expect(res.redirect).not.toBeCalled();
-      expect(createFamilySpy).not.toBeCalled();
-      expect(res.send).toBeCalled();
-    });
-
-    test('Right code, create family fails', async () => {
-      //Arrange
-      const user = {
-        _id: new ObjectId(),
-        email: 'test@test.com'
-      };
-
-      const familyResult: any = null;
-
-      //Mock implementations
-      (AuthDAO.getUserByVerificationCode as jest.Mock).mockResolvedValue(user as never);
-      (AuthDAO.createFamily as jest.Mock).mockResolvedValue(familyResult as never);
-
-      //Act
-      await AuthController.verifyEmail(req, res);
-
-      //Assert
-      expect(res.status).toBeCalledWith(500);
-      expect(res.redirect).not.toBeCalled();
-      expect(createFamilySpy).toBeCalled();
       expect(res.send).toBeCalled();
     });
   });

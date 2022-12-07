@@ -1,7 +1,7 @@
 import mongodb, { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
-import FamilyDAO from './DAOs/family.dao'
-import OptionsDAO from './DAOs/options.dao'
+import FamilyDAL from './family/family.dal'
+import OptionsDAO from './options/options.dao'
 import app from './app'
 
 
@@ -17,7 +17,7 @@ MongoClient.connect(process.env.ALBERO_DB_URI || '',{
     console.error(err.stack);
     process.exit(1);
   }).then(async client => {
-    await FamilyDAO.injectDB(client);
+    await FamilyDAL.injectDB(client);
     await OptionsDAO.injectDB(client);
     app.listen(port, () => {
       console.log(`listening to port ${port}`);
