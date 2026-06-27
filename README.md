@@ -1,72 +1,206 @@
-# albero
-Little project to pass the time, a web page that helps you order your papers for the Italian citizenship.
+# 🌳 Albero — Backend API
 
+GraphQL API for organizing documents required for Italian citizenship (*cittadinanza jure sanguinis*). Built with **NestJS**, **GraphQL (code-first)**, **Mongoose**, and **MongoDB**.
 
--- To start the app --
+---
 
-(cambio a espanish)
+## Tech Stack
 
-1) INSTALAR NODE.JS Y EXPRESS
---Nada... paginita de node, ultima version estable...
---Creo que express lo tengo instalado globalmente, deberia estar en el package.json en realidad. si no funca nada:
+| Layer | Technology |
+|---|---|
+| Framework | NestJS 10 |
+| API | GraphQL (code-first) via `@nestjs/graphql` + Apollo Server |
+| Database | MongoDB 7 via Mongoose + `@nestjs/mongoose` |
+| Auth | JWT (RS256-compatible) + bcrypt |
+| Email | Nodemailer (SMTP) |
+| Runtime | Node.js 22 |
+| Container | Docker + Docker Compose |
 
-/> npm install -g express
+---
 
-2) INSTALAR DEPENDENCIAS
+## Domain Model
 
-Una vez descargado el repo, instalamos la gilada. cada microservicio tiene su propio package.json y sus propias dependencias (TODO: revisar las dependencias y sacar la tuca).
+```
+User
+ └── Family          (e.g. "Famiglia Morelli – Rosario")
+      └── Person     (ancestor or family member)
+           └── Document  (citizenship document with status)
+```
 
-/> npm install
-/\Auth> npm install
-/\Families> npm install
+### Document statuses
 
-Hasta ahora tenemos 2 microservicios, voy a crear un script en el futuro para instalar todo desde el root del repo.
+| Value | Meaning |
+|---|---|
+| `pendiente` | Not yet submitted or under review |
+| `no_aceptado` | Rejected / requires correction |
+| `aceptado` | Approved |
 
-Desde el root: /> npm run devinstall... es bastante cabeza...
+---
 
-3) env variables
+## Getting Started
 
-?
+### Prerequisites
 
-4) Levantar las API'S.
+- Node.js 22+
+- Docker & Docker Compose (recommended) **or** a local MongoDB 7 instance
 
-Lo que se hace generalmente es levantar cada microservicio desde una consola distinta.
+### 1 — Clone and configure
 
-/*Microserv*> npm start
+```bash
+git clone https://github.com/eugemore/Albero-Backend.git
+cd Albero-Backend
+cp .env.example .env
+# Edit .env with your values (JWT secret, SMTP credentials, etc.)
+```
 
-Entre los paquetes está nodemon, que levanta el servidor monitorea los archivos en busca de cambios constantemente, es de uso bastante standrard. El problema es que te bloquea claramente la consola y si empezamos a hacer muchos microservicios se vuelve un poco engorroso levantarlos manualmente y tener 4 o 5 consolas abiertas con distintas aplicaciones. Para eso usamos el paquete pm2, basicamente es un project manager que corre distintos scripts o aplicaciones en distintas instancias de node.
-Para ejecutarlo le damos desde el root del repo:
+### 2a — Run with Docker (recommended)
 
- />pm2 start ecosystem.config.js
- 
- o
+```bash
+docker compose up --build
+```
 
-/>npm start
+The API will be available at `http://localhost:3000/graphql`.
 
-Este archivo contiene un modulo con todas las especificaciones de las distintas aplicaciones. Es todavia un poco falopa para mi, lo estoy investigando. Si queremos monitorear y ver los logs de las aplicaciones tenemos que ir a la pagina de pm2
+### 2b — Run locally
 
-/>pm2 plus
+```bash
+npm install
+npm run start:dev
+```
 
-esto te lleva al monitor, en consola te aparece algo como esto:
+Make sure MongoDB is running and `MONGODB_URI` in `.env` points to it.
 
+---
 
-------
+## GraphQL Playground
 
-[PM2 I/O] Successfully authenticated
-[PM2 I/O] Successfully validated
-┌─────────────────────┬───────────┐
-│ Bucket name         │ Plan type │
-├─────────────────────┼───────────┤
-│ PM2 Plus Monitoring │ free_v4   │
-└─────────────────────┴───────────┘
-[PM2 I/O] If you don't want to connect to a bucket, type 'none'
-[PM2 I/O] Type the name of the bucket you want to connect to :
+When `NODE_ENV` is not `production`, the Apollo Sandbox is available at:
 
-------
+```
+http://localhost:3000/graphql
+```
 
-Aca le mandamos 'PM2 Plus Monitoring' que es la version gratis, solo aguanta hasta 4 microservicios, es lo que hay.
-Para matar las instancias, desde cualquier consola:
+### Example: Register and login
 
-/>pm2 delete all
+```graphql
+# 1. Register
+mutation {
+  register(input: { email: "you@example.com", password: "MySecret123" })
+}
 
-TODO: Levantar los microservicios con Containers --> Docker --> Kubernetes --> etc.
+# 2. After clicking the verification link in your email:
+mutation {
+  login(input: { email: "you@example.com", password: "MySecret123" }) {
+    idToken
+    expiresAt
+  }
+}
+```
+
+Add the token to the Authorization header for subsequent requests:
+
+```
+Authorization: Bearer <idToken>
+```
+
+### Example: Create a family and add a person
+
+```graphql
+mutation {
+  createFamily(input: { name: "Famiglia Morelli – Rosario" }) {
+    _id
+    name
+  }
+}
+
+mutation {
+  createPerson(input: {
+    firstName: "Giovanni"
+    lastName: "Morelli"
+    dateOfBirth: "1880-03-15"
+    placeOfBirth: "Palermo, Italy"
+    familyId: "<family_id>"
+  }) {
+    _id
+    firstName
+    lastName
+  }
+}
+```
+
+### Example: Add and update a document
+
+```graphql
+mutation {
+  createDocument(input: {
+    type: "Acta de nacimiento"
+    personId: "<person_id>"
+    issuingAuthority: "Comune di Palermo – Ufficio Anagrafe"
+    issueDate: "1880-03-15"
+  }) {
+    _id
+    type
+    status
+  }
+}
+
+# Update status after document is approved
+mutation {
+  updateDocument(input: {
+    id: "<document_id>"
+    status: aceptado
+    notes: "Apostille obtained 2024-11-20"
+  }) {
+    _id
+    status
+    notes
+  }
+}
+```
+
+---
+
+## Environment Variables
+
+See `.env.example` for the full list. Required variables:
+
+| Variable | Description |
+|---|---|
+| `MONGODB_URI` | MongoDB connection string |
+| `JWT_SECRET` | Secret key for signing JWT tokens |
+| `MAIL_HOST` | SMTP host |
+| `MAIL_PORT` | SMTP port |
+| `MAIL_USER` | SMTP username |
+| `MAIL_PASS` | SMTP password |
+| `WEB_URL` | Frontend URL (used in verification email) |
+
+---
+
+## Project Structure
+
+```
+src/
+├── app.module.ts            # Root module
+├── main.ts                  # Bootstrap
+├── auth/                    # Registration, login, JWT, email verification
+│   ├── dto/
+│   ├── entities/
+│   ├── responses/
+│   ├── strategies/
+│   ├── auth.module.ts
+│   ├── auth.resolver.ts
+│   └── auth.service.ts
+├── families/                # Family CRUD
+├── persons/                 # Person CRUD (with parent relationships)
+├── documents/               # Document CRUD (with status management)
+├── mailer/                  # Email sending via Nodemailer
+└── common/
+    ├── decorators/          # @CurrentUser()
+    └── guards/              # GqlAuthGuard (JWT for GraphQL)
+```
+
+---
+
+## License
+
+MIT
