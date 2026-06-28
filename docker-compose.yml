@@ -7,10 +7,12 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
+      - '9229:9229'
     env_file:
       - .env
     environment:
       MONGODB_URI: mongodb://mongo:27017/albero
+    command: node --inspect=0.0.0.0:9229 dist/main
     depends_on:
       mongo:
         condition: service_healthy
@@ -20,7 +22,7 @@ services:
     container_name: albero-mongo
     restart: unless-stopped
     ports:
-      - '27017:27017'
+      - '27018:27017'
     volumes:
       - mongo_data:/data/db
     healthcheck:

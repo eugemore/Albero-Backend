@@ -49,10 +49,23 @@ export class AuthService {
       verificationCode,
     });
 
-    await this.mailerService.sendVerificationEmail(user.email, verificationCode);
-    this.logger.log(`New user registered: ${user.email}`);
+    try {
+      await this.mailerService.sendVerificationEmail(user.email, verificationCode);
+      this.logger.log(`New user registered: ${user.email}`);
+      return 'Registration successful. Please check your email to verify your account.';
+    } catch (e: unknown) {
+      if (process.env.NODE_ENV === 'production') throw e;
 
-    return 'Registration successful. Please check your email to verify your account.';
+      const message = e instanceof Error ? e.message : String(e);
+      this.logger.warn(
+        `[DEV] Mailer failed for ${user.email} — auto-verifying account. Error: ${message}`,
+      );
+      await this.userModel.updateOne(
+        { _id: user._id },
+        { $set: { active: true }, $unset: { verificationCode: '' } },
+      );
+      return 'Registration successful. Email delivery failed — account auto-verified (non-production environment).';
+    }
   }
 
   /** Activate user account via verification code sent by email. */
