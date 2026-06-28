@@ -3,7 +3,6 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
-  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
