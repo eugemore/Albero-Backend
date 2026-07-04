@@ -168,11 +168,13 @@ See `.env.example` for the full list. Required variables:
 |---|---|
 | `MONGODB_URI` | MongoDB connection string |
 | `JWT_SECRET` | Secret key for signing JWT tokens |
-| `MAIL_HOST` | SMTP host |
-| `MAIL_PORT` | SMTP port |
-| `MAIL_USER` | SMTP username |
-| `MAIL_PASS` | SMTP password |
+| `MAIL_HOST` | SMTP host (dev only — ignored when `NODE_ENV=production`) |
+| `MAIL_PORT` | SMTP port (dev only) |
+| `MAIL_USER` | SMTP username (dev) / full `@gmail.com` address (production) |
+| `MAIL_PASS` | SMTP password (dev) / Google App Password (production, not the account password) |
 | `WEB_URL` | Frontend URL (used in verification email) |
+
+In production (`NODE_ENV=production`) mail is sent via Gmail SMTP instead of `MAIL_HOST`/`MAIL_PORT`/`MAIL_SECURE`. This requires a Gmail account with 2-Step Verification enabled and an [App Password](https://myaccount.google.com/apppasswords) set as `MAIL_PASS`.
 
 ---
 
