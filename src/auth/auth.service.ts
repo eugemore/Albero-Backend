@@ -1,13 +1,16 @@
 import {
   Injectable,
   ConflictException,
+  ForbiddenException,
   UnauthorizedException,
   NotFoundException,
   Logger,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { compare, hash, genSalt } from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,17 +24,45 @@ const SALT_ROUNDS = 12;
 const TOKEN_TTL_SECONDS = 3600; // 1 hour
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnApplicationBootstrap {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
+    private readonly config: ConfigService,
   ) {}
+
+  /** In demo mode, seed (or refresh) the single demo account instead of allowing signups. */
+  async onApplicationBootstrap(): Promise<void> {
+    if (this.config.get<string>('NODE_ENV') !== 'demo') return;
+
+    const email = this.config.get<string>('DEMO_USER_EMAIL');
+    const password = this.config.get<string>('DEMO_USER_PASS');
+    if (!email || !password) {
+      this.logger.error('DEMO_USER_EMAIL and DEMO_USER_PASS must be set when NODE_ENV=demo');
+      return;
+    }
+
+    const salt = await genSalt(SALT_ROUNDS);
+    const passwordHash = await hash(password, salt);
+
+    await this.userModel.updateOne(
+      { email },
+      { $set: { email, password: passwordHash, active: true }, $unset: { verificationCode: '' } },
+      { upsert: true },
+    );
+
+    this.logger.log(`Demo user ready: ${email}`);
+  }
 
   /** Register a new user and send verification email. */
   async register(input: RegisterInput): Promise<string> {
+    if (this.config.get<string>('NODE_ENV') === 'demo') {
+      throw new ForbiddenException('Registration is disabled in demo mode.');
+    }
+
     const existing = await this.userModel.findOne({ email: input.email }).exec();
     if (existing) {
       throw new ConflictException('An account with that email already exists.');
@@ -53,7 +84,7 @@ export class AuthService {
       this.logger.log(`New user registered: ${user.email}`);
       return 'Registration successful. Please check your email to verify your account.';
     } catch (e: unknown) {
-      if (process.env.NODE_ENV === 'production') throw e;
+      if (this.config.get<string>('NODE_ENV') === 'production') throw e;
 
       const message = e instanceof Error ? e.message : String(e);
       this.logger.warn(

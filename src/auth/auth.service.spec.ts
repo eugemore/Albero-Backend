@@ -1,7 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
-import { ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 import { AuthService } from './auth.service';
 import { User } from './entities/user.schema';
@@ -36,8 +42,11 @@ describe('AuthService', () => {
   let service: AuthService;
   let userModel: Record<string, jest.Mock>;
   let mailerService: jest.Mocked<MailerService>;
+  let configValues: Record<string, string | undefined>;
 
   beforeEach(async () => {
+    configValues = { NODE_ENV: 'development' };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -57,6 +66,10 @@ describe('AuthService', () => {
         {
           provide: MailerService,
           useValue: { sendVerificationEmail: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn((key: string) => configValues[key]) },
         },
       ],
     }).compile();
@@ -94,8 +107,7 @@ describe('AuthService', () => {
     });
 
     it('auto-verifies account when mailer fails in non-production', async () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+      configValues.NODE_ENV = 'development';
 
       userModel.findOne.mockReturnValue(mockQuery(null));
       userModel.create.mockResolvedValue({ ...BASE_USER, email: input.email });
@@ -108,13 +120,10 @@ describe('AuthService', () => {
         { $set: { active: true }, $unset: { verificationCode: '' } },
       );
       expect(result).toContain('auto-verified');
-
-      process.env.NODE_ENV = originalEnv;
     });
 
     it('re-throws mailer error in production', async () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
+      configValues.NODE_ENV = 'production';
 
       userModel.findOne.mockReturnValue(mockQuery(null));
       userModel.create.mockResolvedValue({ ...BASE_USER, email: input.email });
@@ -122,8 +131,49 @@ describe('AuthService', () => {
 
       await expect(service.register(input)).rejects.toThrow('SMTP error');
       expect(userModel.updateOne).not.toHaveBeenCalled();
+    });
 
-      process.env.NODE_ENV = originalEnv;
+    it('throws ForbiddenException in demo mode', async () => {
+      configValues.NODE_ENV = 'demo';
+
+      await expect(service.register(input)).rejects.toThrow(ForbiddenException);
+      expect(userModel.findOne).not.toHaveBeenCalled();
+      expect(userModel.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('onApplicationBootstrap()', () => {
+    it('does nothing outside demo mode', async () => {
+      configValues.NODE_ENV = 'development';
+
+      await service.onApplicationBootstrap();
+
+      expect(userModel.updateOne).not.toHaveBeenCalled();
+    });
+
+    it('upserts the demo user as active when NODE_ENV=demo', async () => {
+      configValues.NODE_ENV = 'demo';
+      configValues.DEMO_USER_EMAIL = 'demo@albero.app';
+      configValues.DEMO_USER_PASS = 'demo-password';
+
+      await service.onApplicationBootstrap();
+
+      expect(userModel.updateOne).toHaveBeenCalledWith(
+        { email: 'demo@albero.app' },
+        {
+          $set: { email: 'demo@albero.app', password: 'hashed_password', active: true },
+          $unset: { verificationCode: '' },
+        },
+        { upsert: true },
+      );
+    });
+
+    it('does not touch the database when demo credentials are missing', async () => {
+      configValues.NODE_ENV = 'demo';
+
+      await service.onApplicationBootstrap();
+
+      expect(userModel.updateOne).not.toHaveBeenCalled();
     });
   });
 
