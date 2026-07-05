@@ -33,16 +33,16 @@ describe('MailerService', () => {
   afterEach(() => jest.clearAllMocks());
 
   describe('onModuleInit()', () => {
-    it('verifies the transporter connection', async () => {
-      await service.onModuleInit();
-
+    it('verifies the transporter connection without blocking', () => {
+      expect(() => service.onModuleInit()).not.toThrow();
       expect(transporter.verify).toHaveBeenCalled();
     });
 
     it('does not throw when verification fails', async () => {
       transporter.verify.mockRejectedValue(new Error('connection refused'));
 
-      await expect(service.onModuleInit()).resolves.toBeUndefined();
+      expect(() => service.onModuleInit()).not.toThrow();
+      await new Promise(process.nextTick); // let the rejected .verify() promise settle
     });
   });
 
