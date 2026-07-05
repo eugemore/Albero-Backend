@@ -6,7 +6,7 @@ import { MAIL_TRANSPORTER } from './mailer.constants';
 
 describe('MailerService', () => {
   let service: MailerService;
-  let transporter: { sendMail: jest.Mock };
+  let transporter: { sendMail: jest.Mock; verify: jest.Mock };
 
   const CONFIG: Record<string, unknown> = {
     WEB_URL: 'http://localhost:4200',
@@ -14,7 +14,10 @@ describe('MailerService', () => {
   };
 
   beforeEach(async () => {
-    transporter = { sendMail: jest.fn().mockResolvedValue(undefined) };
+    transporter = {
+      sendMail: jest.fn().mockResolvedValue(undefined),
+      verify: jest.fn().mockResolvedValue(true),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -28,6 +31,20 @@ describe('MailerService', () => {
   });
 
   afterEach(() => jest.clearAllMocks());
+
+  describe('onModuleInit()', () => {
+    it('verifies the transporter connection', async () => {
+      await service.onModuleInit();
+
+      expect(transporter.verify).toHaveBeenCalled();
+    });
+
+    it('does not throw when verification fails', async () => {
+      transporter.verify.mockRejectedValue(new Error('connection refused'));
+
+      await expect(service.onModuleInit()).resolves.toBeUndefined();
+    });
+  });
 
   describe('sendVerificationEmail()', () => {
     it('sends the verification email with the correct recipient, subject and link', async () => {

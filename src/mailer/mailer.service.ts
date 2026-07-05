@@ -1,17 +1,29 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { MAIL_TRANSPORTER } from './mailer.constants';
 import { renderMailTemplate } from './mail-template.util';
 
 @Injectable()
-export class MailerService {
+export class MailerService implements OnModuleInit {
   private readonly logger = new Logger(MailerService.name);
 
   constructor(
     @Inject(MAIL_TRANSPORTER) private readonly transporter: nodemailer.Transporter,
     private readonly config: ConfigService,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    try {
+      await this.transporter.verify();
+      this.logger.log('Mailer transporter is ready to send emails');
+    } catch (e) {
+      this.logger.error('Mailer transporter verification failed');
+      if (e instanceof Error) {
+        this.logger.error(e.message, e.stack);
+      }
+    }
+  }
 
   async sendVerificationEmail(to: string, code: string): Promise<void> {
     const webUrl = this.config.get<string>('WEB_URL');

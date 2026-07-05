@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Connection } from 'mongoose';
 import { join } from 'path';
 
 import { AuthModule } from './auth/auth.module';
@@ -18,6 +19,13 @@ import { DocumentsModule } from './documents/documents.module';
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
         uri: config.get<string>('MONGODB_URI'),
+        connectionFactory: (connection: Connection) => {
+          const logger = new Logger('MongooseConnection');
+          connection.on('connected', () => logger.log('MongoDB connected'));
+          connection.on('error', (err: Error) => logger.error('MongoDB connection error', err.stack));
+          connection.on('disconnected', () => logger.warn('MongoDB disconnected'));
+          return connection;
+        },
       }),
       inject: [ConfigService],
     }),
